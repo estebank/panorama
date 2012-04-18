@@ -83,9 +83,13 @@ function drawBezier(top_old, bottom_old, top_new, bottom_new, type) {
   var middle = 20;
   var right = 40;
   var left = 0;
-  context.bezierCurveTo(right, top_old - canvas.offsetTop, left, top_new - canvas.offsetTop, right, top_new - canvas.offsetTop);
+  context.bezierCurveTo(right, top_old - canvas.offsetTop,
+                        left, top_new - canvas.offsetTop,
+                        right, top_new - canvas.offsetTop);
   context.lineTo(right, bottom_new - canvas.offsetTop);
-  context.bezierCurveTo(left, bottom_new - canvas.offsetTop, right, bottom_old - canvas.offsetTop, left, bottom_old - canvas.offsetTop);
+  context.bezierCurveTo(left, bottom_new - canvas.offsetTop,
+                        right, bottom_old - canvas.offsetTop,
+                        left, bottom_old - canvas.offsetTop);
   context.closePath();
   context.lineWidth = 0;
   context.fillStyle = color;
