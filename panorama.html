@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+<style>
+canvas {
+  width: 40px;
+  float: left;
+}
+p.mixed {
+  background-color: skyblue;
+}
+div#before, div#before p{
+  width: 300px;
+  float: left;
+}
+div#after, div#after p{
+  width: 300px;
+  float: left;
+}
+p {
+  height: 20px;
+  overflow: hidden;
+  margin: 0;
+}
+p.deletion {
+  background-color: orange;
+}
+div#after p.deletion {
+  height: 1px;
+}
+div#after span.deletion {
+  display: none;
+}
+div#after p.deletion.no-change {
+  height: 20px;
+}
+p.addition {
+  background-color: lightgreen;
+}
+div#before p.addition {
+  height: 1px;
+}
+div#before span.addition {
+  display: none;
+}
+div#before p.addition.no-change {
+  height: 20px;
+}
+span.deletion {
+  border: solid 1px red;
+  background-color: red;
+}
+span.addition {
+  border: solid 1px green;
+  background-color: green;
+}
+</style>
+<script src="diff_match_patch.js"></script>
+<script>
+var state = {
+  '-1': 'deletion',
+  '0': 'no-change',
+  '1': 'addition'
+};
+
+function drawBezier(top_old, bottom_old, top_new, bottom_new, type) {
+  color = 'grey';
+  if (type.contains('mixed')) {
+    color = 'skyblue';
+  }
+  if (type.contains('deletion')) {
+    color = 'orange';
+  }
+  if (type.contains('addition')) {
+    color = 'lightgreen';
+  }
+
+  var canvas = document.getElementById("c");
+  var context = canvas.getContext("2d");
+
+  context.beginPath();
+  context.moveTo(0, top_old - canvas.offsetTop);
+  var middle = 20;
+  var right = 40;
+  var left = 0;
+  context.bezierCurveTo(right, top_old - canvas.offsetTop, left, top_new - canvas.offsetTop, right, top_new - canvas.offsetTop);
+  context.lineTo(right, bottom_new - canvas.offsetTop);
+  context.bezierCurveTo(left, bottom_new - canvas.offsetTop, right, bottom_old - canvas.offsetTop, left, bottom_old - canvas.offsetTop);
+  context.closePath();
+  context.lineWidth = 0;
+  context.fillStyle = color;
+  context.fill();
+  context.strokeStyle = color;
+  context.stroke();
+}
+
+window.onload = function(){
+    var dmp = new diff_match_patch();
+    var diff = dmp.diff_main("asdf\nqwer\nzxcvasdf\nqwer\nzxcvasdf\nqwer\nzxcvasdf\nqwer\nzxcvasdf\nqwer\nzxcv", "qwera\nasd\nxzcv\nhjklasdf\nqwer\nzxcvasdf\nqwer\nzxcvqwera\nasd\nxzcvqwera\nasd\nxzcv");
+
+    var lines = document.createElement('div');
+
+    var addState = function(p, state) {
+      if (!p.classList.contains('mixed')) {
+        if ((p.classList.contains('deletion') && state == 'addition')
+            || (p.classList.contains('addition') && state == 'deletion')) {
+          try {
+            p.classList.remove('addition');
+          } catch (e) {}
+          try {
+            p.classList.remove('deletion');
+          } catch (e) {}
+          p.classList.add('mixed');
+        } else {
+          p.classList.add(state);
+        }
+      }
+    };
+    var i = 0;
+    var c = 0;
+    var p = document.createElement('p');
+    for (i = 0; i < diff.length; i++) {
+      var span = document.createElement('span');
+      var p_state = '';
+      for (c = 0; c < diff[i][1].length; c++) {
+        if (diff[i][1][c] !== '\n') {
+          span.innerText += diff[i][1][c];
+        } else {
+          p.appendChild(span);
+          g = p.classList
+          addState(p, state[diff[i][0]]);
+          p.classList.add('diff-line-' + i);
+          lines.appendChild(p);
+          p = document.createElement('p');
+          span = document.createElement('span');
+        }
+        span.className = state[diff[i][0]];
+      }
+      p.appendChild(span);
+      addState(p, state[diff[i][0]]);
+      p.classList.add('diff-line-' + i);
+      lines.appendChild(p);
+    }
+
+    before = document.getElementById('before');
+    after = document.getElementById('after');
+
+    before.appendChild(lines.cloneNode(true));
+    after.appendChild(lines.cloneNode(true));
+
+    for (var i = 0; i < lines.children.length; i++) {
+      line_before = before.children[0].children[i];
+      line_after = after.children[0].children[i];
+      drawBezier(line_before.offsetTop, line_before.offsetTop + line_before.offsetHeight,
+                 line_after.offsetTop, line_after.offsetTop + line_after.offsetHeight,
+                 lines.children[i].classList)
+    }
+};
+</script>
+</head>
+<body>
+<div id="before">
+</div>
+<canvas id="c" width=40 height=300></canvas>
+<div id="after">
+</div>
+
+</body>
+</html>
